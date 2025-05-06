@@ -3,38 +3,35 @@ import requests
 import orjson
 from datetime import datetime
 
-# Set your OpenRouter API key
-API_KEY = "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"
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Set your Hugging Face API key
+API_KEY = "Bearer hf_xxxxxxxxxxxxxxxxxxxxxxxx"
+#API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf"  # Replace with desired model
+API_URL = "https://router.huggingface.co/fireworks-ai/inference/v1/chat/completions"
 
-# System prompt for the assistant
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
 SYSTEM_PROMPT = """
 You are a highly intelligent and helpful assistant with deep knowledge of programming, writing, reasoning, and research.
 Always respond clearly, accurately, and with proper formatting (markdown and code if needed).
-
-If the user input requires calculation, reasoning, or tool use (like search or calculator), indicate the required tool.
-When answering questions, always refer to the previous context and summarize if helpful.
-
 Respond in a friendly, professional, and thoughtful tone.
 """
 
-# Set up Streamlit UI
 st.set_page_config(page_title="ChatGPT Clone", page_icon="🤖")
 st.title("💬 ChatGPT UI in Streamlit")
 
-# Initialize session state
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 if "history" not in st.session_state:
     st.session_state["history"] = []
 
-# Sidebar for history export
 with st.sidebar:
     st.header("📄 Conversation")
     if st.button("⭳ Save & Export History"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         history_filename = f"chat_history_{timestamp}.json"
-        # Serialize messages using orjson
         chat_bytes = orjson.dumps(st.session_state.messages, option=orjson.OPT_INDENT_2)
         st.download_button(
             label="🔹 Download Chat History",
@@ -43,14 +40,11 @@ with st.sidebar:
             mime="application/json"
         )
 
-# Display previous messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# Chat input
 if prompt := st.chat_input("Type your message..."):
-    # Save user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -59,23 +53,31 @@ if prompt := st.chat_input("Type your message..."):
         message_placeholder = st.empty()
         message_placeholder.markdown("Thinking...")
 
-        headers = {
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json"
-        }
+        # Prepare full conversation prompt (simple format for inference)
+        conversation = SYSTEM_PROMPT + "\n\n"
+        for msg in st.session_state.messages:
+            role = "User" if msg["role"] == "user" else "Assistant"
+            conversation += f"{role}: {msg['content']}\n"
+        conversation += "Assistant:"
 
         payload = {
-            "model": "qwen/qwen3-1.7b:free",
-            "messages": [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
+            "inputs": conversation,
+            "parameters": {
+                "max_new_tokens": 200,
+                "do_sample": True,
+                "top_p": 0.9,
+                "temperature": 0.7,
+            },
+            "model":"accounts/fireworks/models/qwen3-235b-a22b",
         }
 
         try:
             response = requests.post(API_URL, headers=headers, json=payload)
             response.raise_for_status()
-            reply = response.json()["choices"][0]["message"]["content"]
+            result = response.json()
+            reply = result[0]["generated_text"].split("Assistant:")[-1].strip()
         except Exception as e:
             reply = f"**Error**: {e}"
 
-        # Show and save assistant response
         message_placeholder.markdown(reply, unsafe_allow_html=True)
         st.session_state.messages.append({"role": "assistant", "content": reply})
