@@ -4,7 +4,7 @@ import orjson
 from datetime import datetime
 
 # Set your OpenRouter API key
-API_KEY = "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"
+API_KEY = "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"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # System prompt for the assistant
@@ -65,7 +65,7 @@ if prompt := st.chat_input("Type your message..."):
         }
 
         payload = {
-            "model": "deepseek/deepseek-prover-v2:free",
+            "model": "qwen/qwen3-1.7b:free",
             "messages": [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
         }
 
