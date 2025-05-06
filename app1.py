@@ -4,7 +4,7 @@ import orjson
 from datetime import datetime
 
 # Set your OpenRouter API key
-API_KEY = "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"
+API_KEY = "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"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # System prompt for the assistant
