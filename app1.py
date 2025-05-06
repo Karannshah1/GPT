@@ -8,9 +8,10 @@ API_KEY = "Bearer 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"
 #API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf"  # Replace with desired model
 API_URL = "https://router.huggingface.co/fireworks-ai/inference/v1/chat/completions"
 
+
+
 headers = {
     "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json"
 }
 
 SYSTEM_PROMPT = """
